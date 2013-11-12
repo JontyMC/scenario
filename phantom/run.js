@@ -2,20 +2,23 @@ var fs = require('fs'),
     system = require('system'),
     args = system.args;
 
-if (args.length < 3) {
-    console.log('Usage: phantomjs phantomTestRunner.js <test-name>');
-    console.log('Options: --no-debug --no-console-reporter --no-snapshot');
+if (args.length < 5) {
+    console.log('Usage: phantomjs phantomTestRunner.js <jquery-url> <page-url> <tests-dir> <test-name>');
+    console.log('Options: --no-debug --no-console-reporter --no-snapshot --teamcity');
     phantom.exit(1);
 }
 
-var config = require(fs.absolute('gwt')),
-    url = args[1],
-    test = 'tests/' + args[2],
-    testUrl = url + '#' + test,
+var jqueryUrl = args[1],
+    pageUrl = args[2],
+    testDir = args[3],
+    testName = args[4],
+    testUrl = pageUrl + '#' + testDir + '/' + testName,
     consoleReporter = !findArg('--no-console-reporter'),
     teamcity = findArg('--teamcity'),
     snapshot = !findArg('--no-snapshot'),
     debug = !findArg('--no-debug');
+
+phantom.injectJs(jqueryUrl);
 
 var page = require('webpage').create(),
     events = require(fs.absolute('gwt/phantom/eventAggregator')),
@@ -24,10 +27,8 @@ var page = require('webpage').create(),
 if (consoleReporter) {
     require(fs.absolute('gwt/phantom/consoleReporter'));
 }
-if (config.reporters) {
-    config.reporters.forEach(function (reporter) {
-        require(reporter);
-    });
+if (teamcity) {
+    require(fs.absolute('gwt/phantom/teamCityReporter'));
 }
 
 phantom.onError = function (msg, trace) {
@@ -57,6 +58,15 @@ page.onInitialized = function() {
 page.onError = function (msg, trace) {
     if (step) {
         events.publish('gwt.step.error', { step: step, msg: msg, trace: trace });
+    } else {
+        var msgStack = ['PAGE ERROR: ' + msg];
+        if (trace && trace.length) {
+            msgStack.push('TRACE:');
+            trace.forEach(function (t) {
+                msgStack.push(' -> ' + (t.file || t.sourceURL) + ': ' + t.line + (t.function ? ' (in function ' + t.function + ')' : ''));
+            });
+        }
+        console.error(msgStack.join('\n'));
     }
     phantom.exit(1);
 };
@@ -70,7 +80,7 @@ page.onCallback = function (event) {
             break;
         case 'gwt.scenario.end':
             if (snapshot) {
-                page.render(test + '.png');
+                page.render(testName + '.png');
             }
             phantom.exit(0);
             break;

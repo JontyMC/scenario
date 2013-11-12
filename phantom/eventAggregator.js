@@ -1,5 +1,3 @@
-var config = require(fs.absolute('gwt'));
-phantom.injectJs(config.jqueryPath);
 var o = $({});
 
 module.exports = {
