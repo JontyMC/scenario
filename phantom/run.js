@@ -80,7 +80,7 @@ page.onCallback = function (event) {
             break;
         case 'gwt.scenario.end':
             if (snapshot) {
-                page.render(testName + '.png');
+                page.render(testDir + '/' + testName + '.png');
             }
             phantom.exit(0);
             break;
