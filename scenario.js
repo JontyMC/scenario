@@ -1,4 +1,4 @@
-define(['gwt/deferred', 'gwt/eventAggregator'], function (deferred, events) {
+define(['scenario/deferred', 'scenario/eventAggregator'], function (deferred, events) {
 	var scenario;
 
 	function StepFailed(error) {
@@ -40,7 +40,7 @@ define(['gwt/deferred', 'gwt/eventAggregator'], function (deferred, events) {
 
 	Step.prototype.fail = function (test, error) {
 		this.error = new StepFailed(error);
-		events.publish('gwt.step.fail', this.toJSON());
+		events.publish('scenario.step.fail', this.toJSON());
 		return test.reject(this.error);
 	};
 
@@ -60,6 +60,7 @@ define(['gwt/deferred', 'gwt/eventAggregator'], function (deferred, events) {
 	};
 
 	function Scenario(title, setupSteps) {
+		this.id = window.location.hash.substring(1);
 		this.title = title;
 		this.steps = [];
 		this.testRun = deferred();
@@ -71,16 +72,16 @@ define(['gwt/deferred', 'gwt/eventAggregator'], function (deferred, events) {
 		this.steps.push(step);
 
 		this.testPipeline = this.testPipeline.always(function () {
-			events.publish('gwt.step.start', step.toJSON());
+			events.publish('scenario.step.start', step.toJSON());
 		}).fail(function (error) {
 			step.error = {
 				message: 'Step skipped due to previous failure'
 			};
-			events.publish('gwt.step.fail', step.toJSON());
+			events.publish('scenario.step.fail', step.toJSON());
 		}).then(function (result) {
 			return step.run(result);
 		}).always(function () {
-			events.publish('gwt.step.end', step.toJSON());
+			events.publish('scenario.step.end', step.toJSON());
 		});
 	};
 
@@ -88,16 +89,16 @@ define(['gwt/deferred', 'gwt/eventAggregator'], function (deferred, events) {
 		var that = this;
 
 		this.testPipeline = this.testRun.then(function () {
-			events.publish('gwt.scenario.start', that.toJSON());
+			events.publish('scenario.scenario.start', that.toJSON());
 		});
 
 		this.setupSteps();
 
 		this.testPipeline.always(function (result) {
-			if (typeof result === 'StepFailed') {
+			if (that.testPipeline.state() === 'rejected') {
 				that.error = result;
 			}
-			events.publish('gwt.scenario.end', that.toJSON());
+			events.publish('scenario.scenario.end', that.toJSON());
 		});
 
 		this.testRun.resolve();
@@ -110,6 +111,7 @@ define(['gwt/deferred', 'gwt/eventAggregator'], function (deferred, events) {
 		};
 
 		var json = {
+			id: this.id,
 			title: this.title,
 			steps: stepJSON
 		};

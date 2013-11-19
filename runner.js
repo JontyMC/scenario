@@ -1,10 +1,14 @@
-define(['jquery'], function ($) {
+define(function () {
     return {
     	run: function (testId) {
-    		var testModules = window.gwtReporters || ['gwt/consoleReporter'];
+    		var testModules = window.scenarioReporters || ['scenario/consoleReporter'];
     		testId = testId || window.location.hash.substring(1);
-        	testModules.push(testId);
-        	require(testModules);
+            if (testId) {
+            	testModules.push(testId);
+            	require(testModules);
+            } else {
+                window.location = 'scenarios.html';
+            }
     	}
     };
 });

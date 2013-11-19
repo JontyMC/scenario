@@ -17,22 +17,22 @@ var jqueryUrl = args[1],
     jsonReporter = findArg('--json-reporter'),
     teamcity = findArg('--teamcity'),
     snapshot = !findArg('--no-snapshot'),
-    debug = !findArg('--no-debug');
+    debug = !findArg('--no-debug'),
+    exitCode = 0;
 
 phantom.injectJs(jqueryUrl);
 
 var page = require('webpage').create(),
-    events = require(fs.absolute('gwt/phantom/eventAggregator')),
-    scenario, step;
+    events = require(fs.absolute('scenario/phantom/eventAggregator'));
 
 if (consoleReporter) {
-    require(fs.absolute('gwt/phantom/consoleReporter'));
+    require(fs.absolute('scenario/phantom/consoleReporter'));
 }
 if (teamcity) {
-    require(fs.absolute('gwt/phantom/teamCityReporter'));
+    require(fs.absolute('scenario/phantom/teamCityReporter'));
 }
 if (jsonReporter) {
-    require(fs.absolute('gwt/phantom/jsonReporter'));
+    require(fs.absolute('scenario/phantom/jsonReporter'));
 }
 
 phantom.onError = function (msg, trace) {
@@ -55,13 +55,13 @@ if (debug) {
 
 page.onInitialized = function() {
     page.evaluate(function() {
-        window.gwtReporters = ['gwt/phantom/phantomReporter'];
+        window.scenarioReporters = ['scenario/phantom/phantomReporter'];
     });
 };
 
 page.onError = function (msg, trace) {
     if (step) {
-        events.publish('gwt.step.error', { step: step, msg: msg, trace: trace });
+        events.publish('scenario.step.error', { step: step, msg: msg, trace: trace });
     } else {
         var msgStack = ['PAGE ERROR: ' + msg];
         if (trace && trace.length) {
@@ -79,17 +79,14 @@ page.onCallback = function (event) {
     events.publish(event.type, event.obj);
 
     switch(event.type) {
-        case 'gwt.scenario.start':
-            scenario = event.obj;
-            break;
-        case 'gwt.scenario.end':
+        case 'scenario.scenario.end':
             if (snapshot) {
                 page.render(testPath + '.png');
             }
-            phantom.exit(0);
+            phantom.exit(exitCode);
             break;
-        case 'gwt.step.start':
-          step = event.obj;
+        case 'scenario.step.fail':
+          exitCode = 1;
           break;
     }
 };
