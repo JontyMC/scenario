@@ -1,4 +1,4 @@
-gwt
+scenario
 ===
 
 Write your tests using the [Gherkin](https://github.com/cucumber/cucumber/wiki) language:
@@ -32,7 +32,9 @@ scenario('Special offers displayed for preferred customer', function () {
 
 ## Features
 
+* Unit test JS + HTML + CSS
 * Run tests in browser or console via PhantomJS
+* Supports promises/async testing
 * PhantomJS tests can be run in parallel
 * Teamcity reporting
 

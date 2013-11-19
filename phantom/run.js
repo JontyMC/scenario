@@ -4,16 +4,17 @@ var fs = require('fs'),
 
 if (args.length < 5) {
     console.log('Usage: phantomjs phantomTestRunner.js <jquery-url> <page-url> <tests-dir> <test-name>');
-    console.log('Options: --no-debug --no-console-reporter --no-snapshot --teamcity');
+    console.log('Options: --no-debug --no-console-reporter --json-reporter --no-snapshot --teamcity');
     phantom.exit(1);
 }
 
 var jqueryUrl = args[1],
     pageUrl = args[2],
     testDir = args[3],
-    testName = args[4],
-    testUrl = pageUrl + '#' + testDir + '/' + testName,
+    testPath = args[4],
+    testUrl = pageUrl + '#' + testPath,
     consoleReporter = !findArg('--no-console-reporter'),
+    jsonReporter = findArg('--json-reporter'),
     teamcity = findArg('--teamcity'),
     snapshot = !findArg('--no-snapshot'),
     debug = !findArg('--no-debug');
@@ -29,6 +30,9 @@ if (consoleReporter) {
 }
 if (teamcity) {
     require(fs.absolute('gwt/phantom/teamCityReporter'));
+}
+if (jsonReporter) {
+    require(fs.absolute('gwt/phantom/jsonReporter'));
 }
 
 phantom.onError = function (msg, trace) {
@@ -80,7 +84,7 @@ page.onCallback = function (event) {
             break;
         case 'gwt.scenario.end':
             if (snapshot) {
-                page.render(testDir + '/' + testName + '.png');
+                page.render(testPath + '.png');
             }
             phantom.exit(0);
             break;
@@ -100,3 +104,6 @@ function findArg(arg) {
         if (args[i] === arg) return args[i];
     }
 }
+
+// fixes weird bug, where phantom won't exit if we don't use console anywhere
+console

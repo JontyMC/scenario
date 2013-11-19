@@ -9,19 +9,30 @@ namespace ScenarioRunner {
         static int Main(string[] args) {
             var testDirectory = args[3];
             var phantomArgs = Aggregate(args.Take(4).ToArray());
+            var optionalArgs = args.Length > 4 ? Aggregate(args.Skip(4).ToArray()) : "";
 
             var failureCount = 0;
             var tests = Directory.GetFiles(testDirectory + "\\", "*.js", SearchOption.AllDirectories)
-                .Select(Path.GetFileNameWithoutExtension)
+                .Select(x => {
+                    var testName = Path.GetFileNameWithoutExtension(x);
+                    var directoryName = Path.GetDirectoryName(x);
+                    if (directoryName != null) {
+                        testName = directoryName.Replace("\\", "/") + "/" + testName;
+                    }
+                    return testName;
+                })
                 .ToArray();
 
             Console.WriteLine("Running {0} scenario(s)\n", tests.Length);
 
             Parallel.ForEach(tests, test => {
+                var phantomArgsForTest = Aggregate(phantomArgs, "\"" + test + "\"", optionalArgs);
+
+                Console.WriteLine("Running test with args: " + phantomArgsForTest);
                 var process = new Process {
                     StartInfo = {
                         FileName = "phantomjs.exe",
-                        Arguments = Aggregate(phantomArgs, test, Aggregate(args.Skip(4).ToArray())),
+                        Arguments = phantomArgsForTest,
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
                         RedirectStandardError = true
@@ -32,18 +43,15 @@ namespace ScenarioRunner {
 
                 var output = process.StandardOutput.ReadToEnd();
                 var error = process.StandardError.ReadToEnd();
-                process.WaitForExit();
-                var result = process.ExitCode;
-                if (result == 1) {
+
+                process.WaitForExit(5000);
+
+                if (process.ExitCode == 1) {
+                    output = "FAILURE! " + test + "\n" + output + "\n" + error;
                     failureCount++;
                 }
-                if (!string.IsNullOrEmpty(error)) {
-                    Console.WriteLine("PhantomJS ERROR:");
-                    Console.Write(error + "\n");
-                }
-                if (!string.IsNullOrEmpty(output)) {
-                    Console.Write(output + "\n");
-                }
+
+                Console.Write(output + "\n");
             });
 
             Console.WriteLine("{0} scenario(s) run - {1} failure(s)", tests.Length, failureCount);
