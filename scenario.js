@@ -59,8 +59,9 @@ define(['scenario/deferred', 'scenario/eventAggregator'], function (deferred, ev
 		return json;
 	};
 
-	function Scenario(title, setupSteps) {
+	function Scenario(title, setupSteps, metadata) {
 		this.id = window.location.hash.substring(1);
+		this.metadata = metadata || {};
 		this.title = title;
 		this.steps = [];
 		this.testRun = deferred();
@@ -112,6 +113,7 @@ define(['scenario/deferred', 'scenario/eventAggregator'], function (deferred, ev
 
 		var json = {
 			id: this.id,
+			metadata: this.metadata,
 			title: this.title,
 			steps: stepJSON
 		};
@@ -127,8 +129,8 @@ define(['scenario/deferred', 'scenario/eventAggregator'], function (deferred, ev
 		scenario.addStep(step);
 	};
 
-	return function (title, setupSteps) {
-		scenario = new Scenario(title, setupSteps);
+	return function (title, setupSteps, metadata) {
+		scenario = new Scenario(title, setupSteps, metadata);
 		scenario.run();
 	}
 });

@@ -10,7 +10,7 @@
     <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css" rel="stylesheet">
 <style>
 @@import url("//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css" rel="stylesheet");
-body {margin-top: 10px; margin-left: 20px; }
+body {margin: 10px;}
 </style>
  
     <!-- scripts -->
@@ -20,9 +20,12 @@ body {margin-top: 10px; margin-left: 20px; }
   </head>
   <body>
     <h1>Scenarios</h1>
-    @foreach (var scenario in Model.Scenarios) {
+    <dl class="dl-horizontal">
+    @foreach (var feature in Model.Features) {
+    <dt>@feature.Title</dt>
+    foreach (var scenario in feature.Scenarios) {
       var scenarioId = scenario.Id.Replace("/", "_");
-    <div class="panel panel-@(scenario.Error != null ? "danger" : "success")">
+    <dd class="panel panel-@(scenario.Error != null ? "danger" : "success")">
       <div class="panel-heading">
         <span class="panel-title">
           <a data-toggle="collapse" data-target="#@scenarioId" href="#@scenarioId">Scenario: @scenario.Title</a>
@@ -52,7 +55,9 @@ body {margin-top: 10px; margin-left: 20px; }
         </div>
         }
       </div>
-    </div>
+    </dd>
     }
+    }
+    </dl>
   </body>
 </html>

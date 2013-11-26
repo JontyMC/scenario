@@ -77,9 +77,16 @@ namespace ScenarioRunner {
             return failureCount == 0 ? 0 : 1;
         }
 
-        static void CreateHtmlReport(string domain, string htmlPage, Scenario[] scenarios) {
+        static void CreateHtmlReport(string domain, string htmlPage, IEnumerable<Scenario> scenarios)
+        {
+            var features = scenarios
+                .OrderBy(x => x.Title)
+                .GroupBy(x => x.Metadata.Feature, (key, g) => new Feature {
+                    Title = key, Scenarios = g.ToArray()
+                })
+                .OrderBy(x => x.Title);
             var template = File.ReadAllText("Template.cshtml");
-            var html = Razor.Parse(template, new { Domain = domain, HtmlPage = htmlPage, Scenarios = scenarios });
+            var html = Razor.Parse(template, new { Domain = domain, HtmlPage = htmlPage, Features = features });
             File.WriteAllText("../scenarios.html", html);
         }
 
@@ -98,11 +105,21 @@ namespace ScenarioRunner {
         }
     }
 
+    public class Feature {
+        public string Title { get; set; }
+        public Scenario[] Scenarios { get; set; }
+    }
+
     public class Scenario {
         public string Id { get; set; }
         public string Title { get; set; }
+        public Metadata Metadata { get; set; }
         public StepFailed Error { get; set; }
         public Step[] Steps { get; set; }
+    }
+
+    public class Metadata {
+        public string Feature { get; set; }
     }
 
     public class Step {
