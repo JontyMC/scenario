@@ -71,45 +71,15 @@ namespace ScenarioRunner {
             if (createHtmlReport) {
                 var domain = args.Single(x => x.StartsWith("--domain=")).Substring(9);
                 var results = testResults.OrderBy(x => x.Id).ToArray();
-                CreateHtmlReport(domain, results);
+                CreateHtmlReport(domain, htmlPage, results);
             }
 
             return failureCount == 0 ? 0 : 1;
         }
 
-        static void CreateHtmlReport(string domain, Scenario[] scenarios) {
-            const string template = @"
-<html>
-<div>
-    <h1>Scenarios</h1>
-    <ul>
-        @foreach (var scenario in Model.Scenarios) {
-        <li>
-            <span><strong>Scenario: @scenario.Title</strong> - <a href=""@Model.Domain#@scenario.Id"" target=""_blank"">@scenario.Id</a></span>
-            <ul>
-                @foreach (var step in scenario.Steps) {
-                <li>
-                    @if (step.Error != null) {
-                        <strong style=""color: red;"">@step.Title</strong>
-                        <br>
-                        if (step.Error.Stack != null) {
-                        <span style=""color: red;"">@Raw(step.Error.Stack.Replace(""\n"", ""<br>""))</span>
-                        } else {
-                        <span style=""color: red;"">@step.Error.Message</span>
-                        }
-                    } else {
-                        <span>@step.Title</span>
-                    }
-                </li>
-                }
-            </ul>
-        </li>
-        }
-    </ul>
-</div>
-</html>
-";
-            var html = Razor.Parse(template, new { Domain = domain, Scenarios = scenarios });
+        static void CreateHtmlReport(string domain, string htmlPage, Scenario[] scenarios) {
+            var template = File.ReadAllText("Template.cshtml");
+            var html = Razor.Parse(template, new { Domain = domain, HtmlPage = htmlPage, Scenarios = scenarios });
             File.WriteAllText("../scenarios.html", html);
         }
 
@@ -131,6 +101,7 @@ namespace ScenarioRunner {
     public class Scenario {
         public string Id { get; set; }
         public string Title { get; set; }
+        public StepFailed Error { get; set; }
         public Step[] Steps { get; set; }
     }
 

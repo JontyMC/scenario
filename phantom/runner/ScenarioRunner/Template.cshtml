@@ -1,0 +1,58 @@
+﻿<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Scenarios</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+ 
+    <!-- styles -->
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css" rel="stylesheet">
+<style>
+@@import url("//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css" rel="stylesheet");
+body {margin-top: 10px; margin-left: 20px; }
+</style>
+ 
+    <!-- scripts -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.2/underscore-min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"></script>
+  </head>
+  <body>
+    <h1>Scenarios</h1>
+    @foreach (var scenario in Model.Scenarios) {
+      var scenarioId = scenario.Id.Replace("/", "_");
+    <div class="panel panel-@(scenario.Error != null ? "danger" : "success")">
+      <div class="panel-heading">
+        <span class="panel-title">
+          <a data-toggle="collapse" data-target="#@scenarioId" href="#@scenarioId">Scenario: @scenario.Title</a>
+        </span>
+        <a href="@Model.Domain@Model.HtmlPage#@scenario.Id" target="_blank"><i class="glyphicon glyphicon-play"></i> Run</a>
+      </div>
+      <div id="@scenarioId" class="panel-body collapse">
+        @{ var i = 0; }
+        @foreach (var step in scenario.Steps) {
+          var stepId = scenarioId + "_" + i;
+          i++;
+        <div class="panel panel-@(step.Error != null ? "danger" : "success")">
+          <div class="panel-heading">
+            <span class="panel-title">
+              <a data-toggle="collapse" data-target="#@stepId" href="#@stepId">@step.Title</a>
+            </span>
+          </div>
+          @if (step.Error != null) {
+          <div id="@stepId" class="panel-body collapse in">
+            @if (step.Error.Stack != null) {
+            <span style="color: red;">@Raw(step.Error.Stack.Replace("\n", "<br>"))</span>
+            } else {
+            <span style="color: red;">@step.Error.Message</span>
+            }
+          </div> 
+        }
+        </div>
+        }
+      </div>
+    </div>
+    }
+  </body>
+</html>
